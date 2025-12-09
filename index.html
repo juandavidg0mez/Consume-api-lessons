@@ -1,667 +1,233 @@
-<!doctype html>
-<html lang="es">
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Rick & Morty - Consultor (Vanilla Fetch)</title>
-  <style>
-    /* ---------------------------
-       Reset y base
-       --------------------------- */
-    :root{
-      --bg:#0f1724;
-      --card:#0b1220;
-      --accent:#6ee7b7;
-      --muted:#94a3b8;
-      --glass: rgba(255,255,255,0.03);
-      --gap:12px;
-      font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
-      color-scheme: dark;
-    }
-    *{box-sizing:border-box}
-    html,body{height:100%}
-    body{
-      margin:0;
-      background: linear-gradient(180deg,#071026 0%, #071433 60%);
-      color:#e6eef8;
-      -webkit-font-smoothing:antialiased;
-      -moz-osx-font-smoothing:grayscale;
-      padding:20px;
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ToTasks</title>
 
-    /* ---------------------------
-       Contenedor y header
-       --------------------------- */
-    .app {
-      max-width:1200px;
-      margin:0 auto;
-    }
-    header{
-      display:flex;
-      gap:16px;
-      align-items:center;
-      justify-content:space-between;
-      margin-bottom:18px;
-    }
-    .brand{
-      display:flex;
-      gap:12px;
-      align-items:center;
-    }
-    .logo{
-      width:56px;height:56px;border-radius:8px;
-      background:linear-gradient(135deg,#1f2937,#0b1220);
-      display:grid;place-items:center;font-weight:700;font-size:18px;
-      box-shadow: 0 6px 18px rgba(2,6,23,0.7);
-      border:1px solid rgba(255,255,255,0.03);
-    }
-    h1{margin:0;font-size:18px}
-    p.lead{margin:0;color:var(--muted);font-size:13px}
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #f6f5f0; /* blanco hueso (30%) */
+            font-family: Arial, sans-serif;
+        }
 
-    /* ---------------------------
-       Controls (search + filtros)
-       --------------------------- */
-    .controls{
-      display:flex;
-      gap:12px;
-      align-items:center;
-      flex-wrap:wrap;
-    }
-    .search-wrap{
-      display:flex;
-      gap:8px;
-      align-items:center;
-      background:var(--glass);
-      padding:8px;border-radius:10px;
-      border:1px solid rgba(255,255,255,0.03);
-      min-width:260px;
-    }
-    .search-wrap input{
-      background:transparent;border:0;outline:0;color:inherit;font-size:14px;
-      min-width:180px;
-    }
-    .btn{
-      background:transparent;border:1px solid rgba(255,255,255,0.06);
-      padding:8px 10px;border-radius:8px;font-size:13px;color:inherit;cursor:pointer;
-    }
-    .btn.primary{
-      background:linear-gradient(90deg,#10b981,#14b8a6);
-      color:#04201a;border:0;
-      box-shadow: 0 6px 18px rgba(20,184,166,0.12);
-    }
-    .btn.ghost{
-      background:transparent;
-    }
-    .btn.toggle{
-      padding:6px 9px;font-size:13px;
-    }
-    .filters{
-      display:flex;gap:8px;flex-wrap:wrap;
-      align-items:center;
-    }
-    .filters .group{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+        h1 {
+            text-align: center;
+            padding: 20px;
+            color: #2e7d32;
+        }
 
-    /* ---------------------------
-       Grid de tarjetas
-       --------------------------- */
-    #cards {
-      margin-top:18px;
-      display:grid;
-      grid-template-columns: repeat(auto-fill,minmax(230px,1fr));
-      gap:var(--gap);
-    }
+        /* Layout 2 columnas */
+        .layout {
+            display: grid;
+            grid-template-columns: 30% 70%;
+            gap: 20px;
+            width: 90%;
+            margin: 0 auto;
+        }
 
-    .card{
-      background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
-      border-radius:12px;overflow:hidden;
-      display:flex;flex-direction:column;
-      border:1px solid rgba(255,255,255,0.04);
-      transition:transform .15s ease, box-shadow .15s ease;
-    }
-    .card:hover{ transform: translateY(-6px); box-shadow: 0 10px 30px rgba(2,6,23,0.6) }
-    .card .top{
-      display:flex;gap:12px;padding:12px;
-      align-items:center;
-    }
-    .avatar{
-      width:72px;height:72px;border-radius:8px;flex:0 0 72px;object-fit:cover;background:#09121b;
-      border:1px solid rgba(255,255,255,0.03);
-    }
-    .meta{
-      display:flex;flex-direction:column;gap:4px;
-    }
-    .name{font-weight:700;font-size:15px}
-    .sub{font-size:13px;color:var(--muted)}
-    .badge{
-      margin-left:auto;font-size:12px;padding:6px 8px;border-radius:999px;
-      align-self:flex-start;
-      background:rgba(255,255,255,0.03);
-      color:var(--muted);
-    }
+        /* Panel izquierdo: crear tarea */
+        .panel {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0px 2px 6px rgba(0,0,0,0.1);
+            border-left: 8px solid #2e7d32;
+        }
 
-    .card .body{ padding:12px;border-top:1px solid rgba(255,255,255,0.02);display:flex;flex-direction:column;gap:8px;}
-    .small{font-size:13px;color:var(--muted)}
-    .loc{font-size:13px;}
-    .card .actions{display:flex;gap:8px;padding:12px;border-top:1px dashed rgba(255,255,255,0.02);justify-content:flex-end}
+        .panel label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: #2e7d32;
+        }
 
-    /* ---------------------------
-       Footer controls (paginación)
-       --------------------------- */
-    .pager{display:flex;gap:8px;align-items:center;margin-top:14px;justify-content:center}
-    .muted{color:var(--muted)}
+        .panel input, .panel textarea {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #dcdcdc;
+            border-radius: 6px;
+            margin-bottom: 12px;
+            font-size: 14px;
+        }
 
-    /* ---------------------------
-       Spinner & mensajes
-       --------------------------- */
-    .center{display:grid;place-items:center;padding:28px}
-    .spinner{
-      width:36px;height:36px;border-radius:50%;
-      border:4px solid rgba(255,255,255,0.06);
-      border-top-color:var(--accent);
-      animation:spin 1s linear infinite;
-      margin-right:8px;
-    }
-    @keyframes spin{to{transform:rotate(360deg)}}
+        .btn-create {
+            width: 100%;
+            padding: 10px;
+            background-color: #2e7d32;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+        }
 
-    /* ---------------------------
-       Modal
-       --------------------------- */
-    .modal-backdrop{position:fixed;inset:0;background:rgba(2,6,23,0.7);display:none;align-items:center;justify-content:center;padding:20px;z-index:50}
-    .modal{background:var(--card);max-width:720px;width:100%;border-radius:10px;padding:16px;border:1px solid rgba(255,255,255,0.04)}
-    .modal h3{margin-top:0}
-    .episode-list{display:flex;flex-direction:column;gap:8px;max-height:50vh;overflow:auto;padding-right:6px}
-    .ep{padding:8px;border-radius:8px;background:rgba(255,255,255,0.02);display:flex;justify-content:space-between;align-items:center}
+        .btn-create:hover {
+            opacity: 0.9;
+        }
 
-    /* Responsive tweaks */
-    @media (max-width:520px){
-      .logo{width:44px;height:44px}
-      .search-wrap {min-width:120px}
-    }
-  </style>
+        /* Cards de tareas */
+        .cards-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 20px;
+        }
+
+        .card {
+            background-color: #ffffff;
+            border-left: 8px solid #2e7d32; 
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0px 2px 6px rgba(0,0,0,0.1);
+        }
+
+        .card-title {
+            font-size: 20px;
+            font-weight: bold;
+            color: #2e7d32;
+            margin-bottom: 8px;
+        }
+
+        .card-content {
+            font-size: 14px;
+            margin-bottom: 15px;
+            color: #444;
+        }
+
+        .btns {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .btn {
+            padding: 8px 12px;
+            border: none;
+            cursor: pointer;
+            border-radius: 6px;
+            color: white;
+            font-size: 14px;
+        }
+
+        .btn-delete {
+            background-color: #c62828;
+        }
+
+        .btn-update {
+            background-color: #2e7d32;
+        }
+
+        .footer {
+            text-align: center;
+            color: #999;
+            padding: 10px;
+            margin-top: 30px;
+        }
+    </style>
 </head>
 <body>
-  <div class="app">
-    <header>
-      <div class="brand">
-        <div class="logo">R&M</div>
-        <div>
-          <h1>Rick & Morty — Consultor</h1>
-          <p class="lead">Busca, filtra y explora personajes. Vanilla JS + fetch.</p>
-        </div>
-      </div>
 
-      <div class="controls">
-        <div class="search-wrap" title="Buscar por nombre">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" style="opacity:.8"><path d="M21 21l-4.35-4.35" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="11" cy="11" r="6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          <input id="search" placeholder="Buscar por nombre..." type="search" autocomplete="off" />
-          <button class="btn" id="clearSearch" title="Limpiar">✕</button>
+    <h1>Gestor de Tareas</h1>
+
+    <div class="layout">
+
+        <!-- Panel izquierdo: Crear tarea -->
+        <div class="panel">
+            <label for="title">Crear tarea</label>
+
+            <input id="title" type="text" placeholder="Título" />
+            <textarea id="content" rows="4" placeholder="Contenido"></textarea>
+
+            <button class="btn-create" id="btnCreate">Crear Tarea</button>
         </div>
 
-        <div class="filters" aria-hidden="false">
-          <div class="group" id="statusFilters" role="toolbar" aria-label="Filtros de estado">
-            <button class="btn toggle" data-filter-key="status" data-filter-value="">Todos</button>
-            <button class="btn toggle" data-filter-key="status" data-filter-value="alive">Alive</button>
-            <button class="btn toggle" data-filter-key="status" data-filter-value="dead">Dead</button>
-            <button class="btn toggle" data-filter-key="status" data-filter-value="unknown">Unknown</button>
-          </div>
-
-          <div class="group" id="genderFilters" role="toolbar" aria-label="Filtros de género">
-            <button class="btn toggle" data-filter-key="gender" data-filter-value="">Todos</button>
-            <button class="btn toggle" data-filter-key="gender" data-filter-value="male">Male</button>
-            <button class="btn toggle" data-filter-key="gender" data-filter-value="female">Female</button>
-            <button class="btn toggle" data-filter-key="gender" data-filter-value="genderless">Genderless</button>
-            <button class="btn toggle" data-filter-key="gender" data-filter-value="unknown">Unknown</button>
-          </div>
-
-          <button class="btn ghost" id="resetFilters">Reset</button>
-        </div>
-
-        <div style="display:flex;gap:8px;align-items:center">
-          <button class="btn primary" id="loadMoreBtn">Cargar más</button>
-          <button class="btn" id="loadAllBtn" title="Cargar todo (varias peticiones)">Cargar todo</button>
-        </div>
-      </div>
-    </header>
-
-    <main>
-      <div id="feedback" class="center" aria-live="polite" style="display:none">
-        <div style="display:flex;align-items:center">
-          <div class="spinner" role="status" aria-hidden="true"></div>
-          <div id="feedbackText">Cargando...</div>
-        </div>
-      </div>
-
-      <section id="cards" aria-live="polite"></section>
-
-      <div class="pager">
-        <div id="pagerInfo" class="muted"></div>
-      </div>
-    </main>
-
-    <!-- Modal para mostrar episodios -->
-    <div id="modalBackdrop" class="modal-backdrop" role="dialog" aria-modal="true" aria-hidden="true">
-      <div class="modal" role="document">
-        <div style="display:flex;align-items:center;justify-content:space-between">
-          <h3 id="modalTitle">Episodios</h3>
-          <button class="btn" id="closeModal">Cerrar</button>
-        </div>
-        <div id="modalBody">
-          <div id="modalLoading" class="center" style="display:none"><div class="spinner"></div><div class="muted">Cargando episodios...</div></div>
-          <div id="episodeList" class="episode-list"></div>
-        </div>
-      </div>
+        <!-- Panel derecho: Cards -->
+        <div class="cards-container" id="cards"></div>
     </div>
 
-  </div>
+    <div class="footer">Totask Demo UI</div>
 
-  <script>
-    /* ===========================
-       Configuración básica
-       =========================== */
-    const API_BASE = 'https://rickandmortyapi.com/api';
-    const ENDPOINT_CHAR = API_BASE + '/character';
-    // Estado de la UI
-    const state = {
-      page: 1,
-      pages: null,
-      isLoading: false,
-      filters: { name: '', status: '', gender: '' },
-      lastResponseInfo: null,
-    };
+    <script type="module">
+        import { getTasks, deleteTask, updateTask, createTask } from "./script-consul.js";
 
-    /* ===========================
-       Elementos DOM
-       =========================== */
-    const cardsEl = document.getElementById('cards');
-    const feedback = document.getElementById('feedback');
-    const feedbackText = document.getElementById('feedbackText');
-    const pagerInfo = document.getElementById('pagerInfo');
-    const loadMoreBtn = document.getElementById('loadMoreBtn');
-    const loadAllBtn = document.getElementById('loadAllBtn');
-    const searchInput = document.getElementById('search');
-    const clearSearchBtn = document.getElementById('clearSearch');
-    const resetFiltersBtn = document.getElementById('resetFilters');
-    const modalBackdrop = document.getElementById('modalBackdrop');
-    const modalTitle = document.getElementById('modalTitle');
-    const modalLoading = document.getElementById('modalLoading');
-    const episodeList = document.getElementById('episodeList');
-    const closeModalBtn = document.getElementById('closeModal');
+        const cards = document.getElementById("cards");
+        const btnCreate = document.getElementById("btnCreate");
 
-    /* ===========================
-       Utils
-       =========================== */
-    function showFeedback(text = 'Cargando...') {
-      feedbackText.textContent = text;
-      feedback.style.display = 'block';
-    }
-    function hideFeedback() {
-      feedback.style.display = 'none';
-    }
-    function setLoading(flag) {
-      state.isLoading = flag;
-      loadMoreBtn.disabled = flag;
-      loadAllBtn.disabled = flag;
-      if (flag) showFeedback('Cargando...');
-      else hideFeedback();
-    }
-    function qs(params = {}) {
-      // Construye query string ignorando valores vacíos
-      const esc = encodeURIComponent;
-      return Object.keys(params)
-        .filter(k => params[k] !== '' && params[k] !== null && params[k] !== undefined)
-        .map(k => esc(k) + '=' + esc(params[k]))
-        .join('&');
-    }
+        async function loadTasks() {
+            const list = await getTasks();
+            cards.innerHTML = "";
 
-    /* ===========================
-       Renderers
-       =========================== */
-    function clearCards() {
-      cardsEl.innerHTML = '';
-    }
+            list.forEach(task => {
+                const card = document.createElement("div");
+                card.classList.add("card");
 
-    function renderCards(items = [], append = false) {
-      if (!append) cardsEl.innerHTML = '';
-      if (items.length === 0 && !append) {
-        cardsEl.innerHTML = '<div class="center muted">No se encontraron personajes.</div>';
-        return;
-      }
+                card.innerHTML = `
+                    <div class="card-title">${task["taks-title"]}</div>
+                    <div class="card-content">${task["taks-content"]}</div>
 
-      const frag = document.createDocumentFragment();
-      for (const c of items) {
-        const card = document.createElement('article');
-        card.className = 'card';
-        card.innerHTML = `
-          <div class="top">
-            <img class="avatar" src="${c.image}" alt="${escapeHtml(c.name)}"/>
-            <div class="meta">
-              <div class="name">${escapeHtml(c.name)}</div>
-              <div class="sub">${escapeHtml(c.species)} ${c.type ? '• ' + escapeHtml(c.type) : ''}</div>
-              <div class="sub small">Origin: ${escapeHtml(c.origin?.name || 'Unknown')}</div>
-            </div>
-            <div class="badge">${escapeHtml(c.status || 'unknown')}</div>
-          </div>
-          <div class="body">
-            <div class="loc"><strong>Última ubicación:</strong> ${escapeHtml(c.location?.name || 'Unknown')}</div>
-            <div class="small"><strong>Género:</strong> ${escapeHtml(c.gender || 'unknown')}</div>
-            <div class="small"><strong>Episodios:</strong> ${c.episode?.length || 0}</div>
-          </div>
-          <div class="actions">
-            <button class="btn viewEpisodes" data-episodes='${JSON.stringify(c.episode)}'>Ver episodios</button>
-            <a class="btn" href="${c.url}" target="_blank" rel="noopener">Ver endpoint</a>
-          </div>
-        `;
-        frag.appendChild(card);
-      }
-      cardsEl.appendChild(frag);
-      // agregar listeners para botones "Ver episodios"
-      document.querySelectorAll('.viewEpisodes').forEach(btn => {
-        btn.removeEventListener('click', onViewEpisodesClick);
-        btn.addEventListener('click', onViewEpisodesClick);
-      });
-    }
+                    <div class="btns">
+                        <button class="btn btn-update" data-id="${task.id}">Actualizar</button>
+                        <button class="btn btn-delete" data-id="${task.id}">Eliminar</button>
+                    </div>
+                `;
 
-    function updatePager(info) {
-      state.lastResponseInfo = info || null;
-      state.pages = info?.pages || null;
-      const cnt = info?.count ?? '—';
-      const page = state.page ?? 1;
-      const pages = state.pages ?? '—';
-      pagerInfo.textContent = `Mostrando página ${page} de ${pages} · ${cnt} personajes (según filtro)`;
-      // Si no hay next, deshabilitar load more
-      loadMoreBtn.disabled = !info?.next || state.isLoading;
-    }
+                cards.appendChild(card);
+            });
 
-    /* ===========================
-       Fetch characters (con filtros y paginación)
-       =========================== */
-    async function fetchCharacters({ page = 1, append = false } = {}) {
-      try {
-        setLoading(true);
-        const params = {
-          page,
-          name: state.filters.name || undefined,
-          status: state.filters.status || undefined,
-          gender: state.filters.gender || undefined,
-        };
-        const query = qs(params);
-        const url = ENDPOINT_CHAR + (query ? ('?' + query) : '');
-        // fetch
-        const res = await fetch(url);
-        if (!res.ok) {
-          // Si el servidor responde 404 cuando no hay resultados con esos filtros, mostramos mensaje
-          if (res.status === 404) {
-            if (!append) {
-              clearCards();
-              cardsEl.innerHTML = '<div class="center muted">No se encontraron personajes con esos filtros.</div>';
-              updatePager({ count: 0, pages: 0, next: null, prev: null });
+            addEvents();
+        }
+
+        function addEvents() {
+            document.querySelectorAll(".btn-delete").forEach(btn => {
+                btn.addEventListener("click", async () => {
+                    const id = btn.getAttribute("data-id");
+                    await deleteTask(id);
+                    loadTasks();
+                });
+            });
+
+            document.querySelectorAll(".btn-update").forEach(btn => {
+                btn.addEventListener("click", async () => {
+                    const id = btn.getAttribute("data-id");
+
+                    const nuevoTitulo = prompt("Nuevo título:");
+                    const nuevoContenido = prompt("Nuevo contenido:");
+
+                    if (!nuevoTitulo || !nuevoContenido) return;
+
+                    await updateTask(id, {
+                        "taks-title": nuevoTitulo,
+                        "taks-content": nuevoContenido
+                    });
+
+                    loadTasks();
+                });
+            });
+        }
+
+        btnCreate.addEventListener("click", async () => {
+            const title = document.getElementById("title").value.trim();
+            const content = document.getElementById("content").value.trim();
+
+            if (!title || !content) {
+                alert("Completa ambos campos.");
+                return;
             }
-            setLoading(false);
-            return;
-          }
-          throw new Error('Error en la petición: ' + res.status);
-        }
-        const json = await res.json();
-        state.page = page;
-        renderCards(json.results || [], append);
-        updatePager(json.info);
-      } catch (err) {
-        console.error(err);
-        cardsEl.innerHTML = `<div class="center muted">Ocurrió un error: ${escapeHtml(err.message)}</div>`;
-      } finally {
-        setLoading(false);
-      }
-    }
 
-    /* ===========================
-       Cargar "todo" (iterar todas las páginas)
-       Nota: esto hace múltiples requests a la API.
-       =========================== */
-    async function fetchAllCharacters() {
-      try {
-        setLoading(true);
-        showFeedback('Recopilando todos los personajes (esto puede tardar)...');
-        // Primera petición para conocer pages
-        const params = { page: 1, name: state.filters.name || undefined, status: state.filters.status || undefined, gender: state.filters.gender || undefined };
-        const firstRes = await fetch(ENDPOINT_CHAR + (qs(params) ? '?' + qs(params) : ''));
-        if (!firstRes.ok) {
-          if (firstRes.status === 404) {
-            clearCards();
-            cardsEl.innerHTML = '<div class="center muted">No se encontraron personajes con esos filtros.</div>';
-            setLoading(false);
-            return;
-          }
-          throw new Error('Error al obtener primera página: ' + firstRes.status);
-        }
-        const firstJson = await firstRes.json();
-        const pages = firstJson.info.pages || 1;
-        // Renderizar primera página
-        clearCards();
-        renderCards(firstJson.results || [], true);
+            await createTask({
+                "taks-title": title,
+                "taks-content": content
+            });
 
-        // Crear array de promesas para las demás páginas (2..pages)
-        const promises = [];
-        for (let p = 2; p <= pages; p++) {
-          const q = { page: p, name: state.filters.name || undefined, status: state.filters.status || undefined, gender: state.filters.gender || undefined };
-          const u = ENDPOINT_CHAR + (qs(q) ? '?' + qs(q) : '');
-          promises.push(fetch(u).then(r => r.ok ? r.json() : null).catch(e => {
-            console.warn('error en página', p, e);
-            return null;
-          }));
-        }
+            document.getElementById("title").value = "";
+            document.getElementById("content").value = "";
 
-        // Ir vaciando resultados conforme llegan para dar feedback visual
-        const resultsSoFar = [];
-        for (let i = 0; i < promises.length; i++) {
-          // esperar al siguiente en la lista (no todos en paralelo para evitar saturación)
-          // sin embargo para eficiencia se podría usar Promise.all; aquí usamos batches de 6
-        }
-        // Hacemos los requests en batches de 6 para ser amables con la API
-        const batchSize = 6;
-        for (let i = 0; i < promises.length; i += batchSize) {
-          const batch = promises.slice(i, i + batchSize).map(p => p);
-          const chunk = await Promise.all(batch);
-          for (const j of chunk) {
-            if (j && Array.isArray(j.results)) {
-              resultsSoFar.push(...j.results);
-              // append inmediatamente
-              renderCards(j.results, true);
-            }
-          }
-          showFeedback(`Cargando páginas... ${(Math.min(i+batchSize, promises.length))} / ${promises.length} procesadas`);
-        }
-        updatePager(firstJson.info);
-      } catch (err) {
-        console.error(err);
-        cardsEl.innerHTML = `<div class="center muted">Ocurrió un error: ${escapeHtml(err.message)}</div>`;
-      } finally {
-        setLoading(false);
-        hideFeedback();
-      }
-    }
+            loadTasks();
+        });
 
-    /* ===========================
-       Eventos de UI
-       =========================== */
+        loadTasks();
+    </script>
 
-    // Maneja click en botones de filtros (atributos data-filter-key/value)
-    document.querySelectorAll('.filters .toggle').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const key = btn.dataset.filterKey;
-        const value = btn.dataset.filterValue;
-        // Marcar visualmente: simple toggle pero aquí queremos un único valor por grupo (status/gender)
-        // buscamos otros botones del mismo key y desactivamos
-        document.querySelectorAll(`.filters .toggle[data-filter-key="${key}"]`).forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        state.filters[key] = value;
-        // reset page y fetch
-        state.page = 1;
-        fetchCharacters({ page: 1, append: false });
-      });
-    });
-
-    resetFiltersBtn.addEventListener('click', () => {
-      state.filters = { name: '', status: '', gender: '' };
-      state.page = 1;
-      // quitar clases active
-      document.querySelectorAll('.filters .toggle').forEach(b => b.classList.remove('active'));
-      // activar "Todos" por defecto (botones con value '')
-      document.querySelectorAll('.filters .toggle[data-filter-value=""]').forEach(b => b.classList.add('active'));
-      searchInput.value = '';
-      fetchCharacters({ page: 1, append: false });
-    });
-
-    // Cargar siguiente página
-    loadMoreBtn.addEventListener('click', async () => {
-      if (state.isLoading) return;
-      // Si API nos dio 'next' en lastResponseInfo, podemos incrementar
-      if (state.lastResponseInfo?.next) {
-        const nextPage = state.page + 1;
-        await fetchCharacters({ page: nextPage, append: true });
-        // mover scroll sutil para mostrar nuevas cards
-        window.scrollTo({ top: document.body.scrollHeight - 200, behavior: 'smooth' });
-      } else {
-        // si no hay next, intentar cargar página siguiente por conteo (precaución)
-        if (state.pages && state.page < state.pages) {
-          await fetchCharacters({ page: state.page + 1, append: true });
-        } else {
-          showTemporaryMessage('No hay más páginas.');
-        }
-      }
-    });
-
-    loadAllBtn.addEventListener('click', async () => {
-      // Confirmación ligera (simple)
-      if (confirm('Cargar todo puede hacer muchas peticiones (varias páginas). ¿Deseas continuar?')) {
-        await fetchAllCharacters();
-      }
-    });
-
-    // Buscador con debounce
-    function debounce(fn, wait = 350) {
-      let t;
-      return (...args) => {
-        clearTimeout(t);
-        t = setTimeout(() => fn(...args), wait);
-      };
-    }
-    const onSearch = debounce((ev) => {
-      const v = ev.target.value.trim();
-      state.filters.name = v;
-      state.page = 1;
-      fetchCharacters({ page: 1, append: false });
-    }, 300);
-
-    searchInput.addEventListener('input', onSearch);
-
-    clearSearchBtn.addEventListener('click', () => {
-      searchInput.value = '';
-      state.filters.name = '';
-      state.page = 1;
-      fetchCharacters({ page: 1, append: false });
-    });
-
-    function showTemporaryMessage(msg, ms = 1500) {
-      const prev = feedbackText.textContent;
-      showFeedback(msg);
-      setTimeout(() => {
-        feedbackText.textContent = prev;
-        hideFeedback();
-      }, ms);
-    }
-
-    // Ver episodios: parseamos los URLs y hacemos una petición a /episode/ids
-    async function onViewEpisodesClick(ev) {
-      const epData = ev.currentTarget.dataset.episodes;
-      let list = [];
-      try {
-        list = JSON.parse(epData || '[]');
-      } catch (e) {
-        list = [];
-      }
-      if (list.length === 0) {
-        episodeList.innerHTML = '<div class="muted">No hay episodios.</div>';
-        openModal('Episodios');
-        return;
-      }
-      openModal('Episodios (' + list.length + ')');
-      modalLoading.style.display = 'block';
-      episodeList.innerHTML = '';
-      // Extraer ids
-      const ids = list.map(url => {
-        const parts = url.split('/');
-        return parts[parts.length - 1];
-      }).join(',');
-      try {
-        // API soporta /episode/1,2,3
-        const res = await fetch(API_BASE + '/episode/' + ids);
-        if (!res.ok) {
-          episodeList.innerHTML = `<div class="muted">Error al cargar episodios (${res.status}).</div>`;
-          return;
-        }
-        const json = await res.json();
-        const eps = Array.isArray(json) ? json : [json];
-        modalLoading.style.display = 'none';
-        episodeList.innerHTML = eps.map(ep => `
-          <div class="ep">
-            <div>
-              <div style="font-weight:700">${escapeHtml(ep.episode)} — ${escapeHtml(ep.name)}</div>
-              <div class="muted" style="font-size:13px">${escapeHtml(ep.air_date)}</div>
-            </div>
-            <div class="muted">${ep.characters?.length ?? 0} chars</div>
-          </div>
-        `).join('');
-      } catch (err) {
-        console.error(err);
-        modalLoading.style.display = 'none';
-        episodeList.innerHTML = `<div class="muted">Ocurrió un error: ${escapeHtml(err.message)}</div>`;
-      }
-    }
-
-    // Modal handlers
-    function openModal(title = 'Episodios') {
-      modalTitle.textContent = title;
-      modalBackdrop.style.display = 'flex';
-      modalBackdrop.setAttribute('aria-hidden', 'false');
-    }
-    function closeModal() {
-      modalBackdrop.style.display = 'none';
-      modalBackdrop.setAttribute('aria-hidden', 'true');
-      episodeList.innerHTML = '';
-    }
-    closeModalBtn.addEventListener('click', closeModal);
-    modalBackdrop.addEventListener('click', (e) => {
-      if (e.target === modalBackdrop) closeModal();
-    });
-
-    /* ===========================
-       Helpers
-       =========================== */
-    function escapeHtml(str) {
-      if (typeof str !== 'string') return str ?? '';
-      return str.replace(/[&<>"'`=\/]/g, function(s) {
-        return ({
-          '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;', '/':'&#x2F;','`':'&#x60;','=':'&#x3D;'
-        })[s];
-      });
-    }
-
-    /* ===========================
-       Inicialización
-       =========================== */
-    (function init() {
-      // Marcar botones "Todos" activos por defecto
-      document.querySelectorAll('.filters .toggle[data-filter-value=""]').forEach(b => b.classList.add('active'));
-      // Carga inicial: primera página sin filtros
-      fetchCharacters({ page: 1, append: false });
-    })();
-
-    // Exponer funciones para debugging (opcional)
-    window.__rm = {
-      fetchCharacters,
-      fetchAllCharacters,
-      getState: () => JSON.parse(JSON.stringify(state))
-    };
-  </script>
 </body>
 </html>
